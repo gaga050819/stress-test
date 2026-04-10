@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Stress Test</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #111;
+            font-family: sans-serif;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin-top:0">Your dead</h2>
+        <p>Фігур: <span id="count">0</span></p>
+        <p>FPS: <span id="fps">0</span></p>
+    </div>
+
+    <canvas id="testCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const countDisplay = document.getElementById('count');
+        const fpsDisplay = document.getElementById('fps');
+
+        let width, height;
+        const shapes = [];
+
+        const spawnRate = 100000; 
+        
+        let lastTime = performance.now();
+        let frames = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Shape {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 20 + 5;
+                this.speedX = (Math.random() - 0.5) * 5;
+                this.speedY = (Math.random() - 0.5) * 5;
+                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                this.rotation = 0;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(17, 17, 17, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+
+            for (let i = 0; i < spawnRate; i++) {
+                shapes.push(new Shape());
+            }
+
+            shapes.forEach(shape => {
+                shape.update();
+                shape.draw();
+            });
+
+            frames++;
+            const now = performance.now();
+            if (now >= lastTime + 1000) {
+                fpsDisplay.innerText = frames;
+                countDisplay.innerText = shapes.length;
+                frames = 0;
+                lastTime = now;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
